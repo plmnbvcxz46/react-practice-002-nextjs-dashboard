@@ -116,15 +116,17 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
                 >
                   Paid <CheckIcon className="h-4 w-4" />
                 </label>
-                <div id="Status-error" aria-atomic="true" aria-live='polite'>
-                  {
-                    state.errors?.status &&
-                    state.errors.status.map((error) => (
-                      <p key={error} className='mt-2 text-red-500 text-sm'>{error}</p>
-                    ))
-                  }
-                </div>
+
               </div>
+
+            </div>
+            <div id="Status-error" aria-atomic="true" aria-live='polite'>
+              {
+                state.errors?.status &&
+                state.errors.status.map((error) => (
+                  <p key={error} className='mt-2 text-red-500 text-sm'>{error}</p>
+                ))
+              }
             </div>
           </div>
         </fieldset>
