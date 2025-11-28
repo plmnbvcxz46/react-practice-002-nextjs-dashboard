@@ -1,9 +1,8 @@
-import NextAuth from "next-auth";
-import { authConfig } from "./auth.config";
+import type { NextRequest } from "next/server";
 
-export default NextAuth(authConfig).auth;
-
+export function proxy(request: NextRequest) {
+  console.log("Proxy");
+}
 export const config = {
-  // https://nextjs.org/docs/app/api-reference/file-conventions/proxy#matcher
-  matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
+  matcher: ["/:path*"],
 };
