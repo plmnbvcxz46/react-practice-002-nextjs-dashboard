@@ -6,6 +6,8 @@ import postgres from "postgres";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
+import type { User } from "@/app/lib/definitions";
+import bcrypt from "bcrypt";
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require" });
 
@@ -21,6 +23,12 @@ const FormSchema = z.object({
     invalid_type_error: "Please select an invoice status.",
   }),
   date: z.string(),
+});
+
+const CreateUser = z.object({
+  name: z.string().min(1, { message: "entry your name" }),
+  email: z.string().email({ message: "entry your valid email" }),
+  password: z.string().min(6, { message: "entry your valid password" }),
 });
 
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
@@ -132,4 +140,44 @@ export async function authenticate(
     }
     throw error;
   }
+}
+
+export async function createUser(prevState: any, formData: FormData) {
+  const validatedFields = CreateUser.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Missing fields. Failed to create user.",
+    };
+  }
+
+  const { name, email, password } = validatedFields.data;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  // Check if email already exists
+  const existingUser = await sql`
+    SELECT email FROM users WHERE email = ${email}
+  `;
+
+  if (existingUser.length > 0) {
+    return {
+      errors: { email: ["This email is already registered."] },
+      message: "Email already exists.",
+    };
+  }
+
+  try {
+    await sql`
+      INSERT INTO users (name, email, password)
+      VALUES (${name}, ${email}, ${hashedPassword})
+    `;
+  } catch (error) {
+    return { message: "database error" };
+  }
+
+  redirect("/login");
 }
