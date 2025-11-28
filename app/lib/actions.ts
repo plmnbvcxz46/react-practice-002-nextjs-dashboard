@@ -152,12 +152,23 @@ export async function createUser(prevState: any, formData: FormData) {
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "faild to create",
+      message: "Missing fields. Failed to create user.",
     };
   }
 
   const { name, email, password } = validatedFields.data;
   const hashedPassword = await bcrypt.hash(password, 10);
+  // Check if email already exists
+  const existingUser = await sql`
+    SELECT email FROM users WHERE email = ${email}
+  `;
+
+  if (existingUser.length > 0) {
+    return {
+      errors: { email: ["This email is already registered."] },
+      message: "Email already exists.",
+    };
+  }
 
   try {
     await sql`
